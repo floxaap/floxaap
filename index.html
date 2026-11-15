@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com; frame-src https://floxaap-d7a1a.firebaseapp.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Floxaap</title>
+<meta name="theme-color" content="#04150F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--bg:#03110C;--sf:#07201A;--sf2:#0C2D21;--ink:#F4ECD3;--mut:#8FAC9E;--em:#1FB58A;--gold:#E3C25B;--line:#12372A;--bad:#E58A7A}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,"Segoe UI",Tahoma,sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+#app{max-width:640px;margin:auto;height:100%;display:flex;flex-direction:column}
+main{flex:1;overflow:auto;padding:12px}
+nav{display:flex;border-top:1px solid var(--line);background:var(--sf);padding-bottom:env(safe-area-inset-bottom,0)}
+nav button{flex:1;padding:12px 0;background:none;border:0;color:var(--mut);cursor:pointer}
+nav button.on{color:var(--gold);font-weight:700}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.row{display:flex;align-items:center;gap:10px}.grow{flex:1;min-width:0}
+.av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#E9D17A,#A98414);color:#04150F;display:grid;place-items:center;font-weight:800;flex:none}
+.mut{color:var(--mut);font-size:13px}
+input,textarea{width:100%;background:var(--sf2);border:1px solid var(--line);border-radius:10px;padding:10px;margin:4px 0}
+.btn{background:linear-gradient(135deg,#E9D17A,#A98414);color:#04150F;border:0;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.o{background:none;color:var(--gold);border:1px solid var(--gold)}
+.lnk{background:none;border:0;color:var(--mut);cursor:pointer;padding:4px 8px}
+.err{color:var(--bad);min-height:20px;font-size:14px}
+img.pi{width:100%;border-radius:10px;margin-top:8px}
+.msgs{display:flex;flex-direction:column;gap:6px}
+.m{max-width:78%;padding:8px 12px;border-radius:14px;background:var(--sf2);align-self:flex-start;white-space:pre-wrap;word-break:break-word}
+.m.me{background:#0F6B4F;align-self:flex-end}
+.auth{max-width:380px;margin:auto;padding:24px}
+h1{color:var(--gold);text-align:center}
+.bar{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:var(--sf)}
+</style>
+</head>
+<body>
+<div id="app"><main id="main"></main><nav id="nav" hidden></nav></div>
+<script type="module">
+// ===== إعدادات Firebase (مشروع floxaap-d7a1a) =====
+const CFG={
+  apiKey:"AIzaSyAgIffss9riDmNtwtRiTL-bxM3Ylju3PXE",
+  authDomain:"floxaap-d7a1a.firebaseapp.com",
+  projectId:"floxaap-d7a1a",
+  storageBucket:"floxaap-d7a1a.firebasestorage.app",
+  messagingSenderId:"363200418804",
+  appId:"1:363200418804:web:8942848d201d267a811fa1"
+};
+// =================================================
+const $=s=>document.querySelector(s),main=$("#main"),nav=$("#nav");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const V="10.14.1",G=`https://www.gstatic.com/firebasejs/${V}/`;
+let FA,A,F;
+try{[FA,A,F]=await Promise.all([import(G+"firebase-app.js"),import(G+"firebase-auth.js"),import(G+"firebase-firestore.js")])}
+catch(e){main.innerHTML=`<div class="auth"><h1>Floxaap</h1><p class="err">تعذّر تحميل Firebase. تأكد من اتصال الإنترنت ثم أعد تحميل الصفحة.</p></div>`;throw e}
+const {doc,getDoc,setDoc,addDoc,updateDoc,deleteDoc,collection,query,where,orderBy,limit,onSnapshot,getDocs,serverTimestamp,arrayUnion,arrayRemove,runTransaction}=F;
+const app=FA.initializeApp(CFG),auth=A.getAuth(app),db=F.getFirestore(app);
+
+let me=null,following=new Set(),subs=[],fsub=null,tab="feed",signing=false,pendingMsg="";
+if("serviceWorker"in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+const stop=()=>{subs.forEach(u=>u());subs=[]};
+const ini=n=>esc((n||"?").trim()[0]?.toUpperCase());
+const cid=(a,b)=>[a,b].sort().join("_");
+const ms=t=>t?.toMillis?.()||Date.now();
+const safeImg=s=>typeof s==="string"&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s);
+
+A.onAuthStateChanged(auth,u=>{if(!signing)boot(u)});
+
+async function boot(u){
+  stop();if(fsub){fsub();fsub=null}
+  if(!u){me=null;following=new Set();nav.hidden=true;main.style.cssText="";const m=pendingMsg;pendingMsg="";return authView(m)}
+  try{
+    let s=await getDoc(doc(db,"users",u.uid));
+    for(let i=0;!s.exists()&&i<8;i++){await new Promise(r=>setTimeout(r,400));s=await getDoc(doc(db,"users",u.uid))}
+    if(!s.exists()){pendingMsg="تعذّر تحميل الحساب، أعد المحاولة";return A.signOut(auth)}
+    me={uid:u.uid,...s.data()};
+    fsub=onSnapshot(collection(db,"users",me.uid,"following"),q=>{following=new Set(q.docs.map(d=>d.id));if(tab==="feed")show("feed")},()=>{});
+    nav.hidden=false;main.style.cssText="";show("feed");
+  }catch(e){pendingMsg="تعذّر تحميل الحساب ("+(e.code||e.message)+")؛ تأكد من نشر قواعد Firestore";A.signOut(auth)}
+}
+
+function authView(msg=""){
+  nav.hidden=true;let reg=false;
+  const draw=()=>{main.innerHTML=`<div class="auth"><h1>Floxaap</h1><div class="card">
+  ${reg?`<input id="nm" maxlength="40" placeholder="الاسم">
+  <input id="un" dir="ltr" maxlength="20" placeholder="اسم المستخدم (a-z 0-9 _)" autocapitalize="none" autocomplete="off">`:""}
+  <input id="em" dir="ltr" type="email" placeholder="البريد الإلكتروني" autocomplete="email">
+  <input id="pw" dir="ltr" type="password" placeholder="كلمة المرور (6 أحرف على الأقل)" autocomplete="${reg?"new-password":"current-password"}">
+  <div class="err" id="er">${esc(msg)}</div>
+  <button class="btn" id="go" style="width:100%">${reg?"إنشاء حساب":"دخول"}</button>
+  <p style="text-align:center"><button class="lnk" id="sw">${reg?"عندي حساب":"حساب جديد"}</button></p></div></div>`;
+  $("#sw").onclick=()=>{reg=!reg;msg="";draw()};
+  const say=t=>{const e=$("#er");if(e)e.textContent=t};
+  $("#go").onclick=async()=>{
+    const em=$("#em").value.trim(),pw=$("#pw").value;say("");
+    const btn=$("#go");btn.disabled=true;
+    try{
+      if(!reg){await A.signInWithEmailAndPassword(auth,em,pw);return}
+      const nm=$("#nm").value.trim(),un=$("#un").value.trim().toLowerCase();
+      if(!nm)return say("اكتب اسمك");
+      if(nm.length>40)return say("الاسم طويل (الحد 40 حرفاً)");
+      if(!/^[a-z0-9_]{3,20}$/.test(un))return say("اسم المستخدم: 3-20 حرفاً إنجليزياً أو أرقاماً أو _");
+      if(pw.length<6)return say("كلمة المرور 6 أحرف على الأقل");
+      signing=true;
+      const c=await A.createUserWithEmailAndPassword(auth,em,pw);
+      try{
+        await runTransaction(db,async t=>{
+          const r=doc(db,"usernames",un);
+          if((await t.get(r)).exists())throw new Error("taken");
+          t.set(r,{uid:c.user.uid});
+          t.set(doc(db,"users",c.user.uid),{name:nm,username:un,username_lower:un,bio:"",createdAt:serverTimestamp()});
+        });
+      }catch(e){try{await c.user.delete()}catch{}throw e}
+      signing=false;await boot(c.user);
+    }catch(e){
+      signing=false;
+      say(({"auth/invalid-credential":"البريد أو كلمة المرور غير صحيحة","auth/invalid-login-credentials":"البريد أو كلمة المرور غير صحيحة","auth/email-already-in-use":"البريد مستخدم من قبل","auth/weak-password":"كلمة المرور ضعيفة","auth/invalid-email":"البريد غير صالح","auth/too-many-requests":"محاولات كثيرة، انتظر قليلاً ثم حاول","auth/network-request-failed":"مشكلة في الاتصال بالإنترنت","taken":"اسم المستخدم محجوز"})[e.code||e.message]||"حدث خطأ: "+(e.code||e.message));
+    }finally{const b=$("#go");if(b)b.disabled=false}
+  }};draw();
+}
+
+nav.innerHTML=[["feed","الرئيسية"],["search","بحث"],["chats","الرسائل"],["me","حسابي"]].map(([k,l])=>`<button data-t="${k}">${l}</button>`).join("");
+nav.onclick=e=>{const t=e.target.dataset.t;if(t)show(t)};
+function show(t){tab=t;stop();nav.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));({feed,search,chats,me:profileV})[t]()}
+
+function compress(file){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,900/Math.max(i.width,i.height)),c=document.createElement("canvas");c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext("2d").drawImage(i,0,0,c.width,c.height);ok(c.toDataURL("image/jpeg",.7))};i.onerror=no;i.src=r.result};r.onerror=no;r.readAsDataURL(file)})}
+
+function feed(){
+  main.innerHTML=`<div class="card"><textarea id="tx" rows="2" maxlength="1000" placeholder="بماذا تفكر؟"></textarea>
+  <div class="row"><input id="im" type="file" accept="image/*" style="margin:0"><button class="btn" id="pb">نشر</button></div><div class="err" id="er"></div></div><div id="ps"></div>`;
+  $("#pb").onclick=async()=>{
+    const text=$("#tx").value.trim(),f=$("#im").files[0];if(!text&&!f)return;
+    $("#pb").disabled=true;$("#er").textContent="";
+    try{const image=f?await compress(f):"";
+      if(image.length>650000)throw{code:"الصورة كبيرة، اختر صورة أصغر"};
+      await addDoc(collection(db,"posts"),{uid:me.uid,name:me.name,username:me.username,text,image,likes:[],ts:serverTimestamp()});
+      $("#tx").value="";$("#im").value=""}catch(e){$("#er").textContent="فشل النشر: "+(e.code||e.message)}
+    $("#pb").disabled=false};
+  subs.push(onSnapshot(query(collection(db,"posts"),orderBy("ts","desc"),limit(150)),q=>{
+    const L=q.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.uid===me.uid||following.has(p.uid));
+    $("#ps").innerHTML=L.length?L.map(p=>{const lk=(p.likes||[]).includes(me.uid);return`<div class="card"><div class="row"><div class="av">${ini(p.name)}</div><div class="grow"><b>${esc(p.name)}</b> <span class="mut" dir="ltr">@${esc(p.username)}</span><div class="mut">${new Date(ms(p.ts)).toLocaleString("ar")}</div></div>${p.uid===me.uid?`<button class="lnk" data-del="${esc(p.id)}">حذف</button>`:""}</div>
+    <p style="white-space:pre-wrap;word-break:break-word">${esc(p.text)}</p>${safeImg(p.image)?`<img class="pi" alt="" src="${p.image}">`:""}
+    <button class="lnk" data-lk="${esc(p.id)}" data-on="${lk?1:0}" style="color:${lk?"var(--gold)":"var(--mut)"}">${lk?"♥":"♡"} ${(p.likes||[]).length}</button></div>`}).join(""):`<p class="mut" style="text-align:center">لا توجد منشورات بعد. ابحث عن أصدقائك وتابعهم، أو انشر أول منشور.</p>`;
+  },e=>{$("#ps").innerHTML=`<p class="err">${esc(e.code)} — تأكد من نشر قواعد Firestore</p>`}));
+  $("#ps").onclick=async e=>{const t=e.target;
+    try{
+      if(t.dataset.del&&confirm("حذف المنشور؟"))await deleteDoc(doc(db,"posts",t.dataset.del));
+      if(t.dataset.lk)await updateDoc(doc(db,"posts",t.dataset.lk),{likes:t.dataset.on==="1"?arrayRemove(me.uid):arrayUnion(me.uid)});
+    }catch(err){$("#er").textContent="تعذّر التنفيذ: "+(err.code||err.message)}};
+}
+
+function search(){
+  main.innerHTML=`<input id="q" dir="ltr" placeholder="ابحث باسم المستخدم..." autocapitalize="none" autocomplete="off"><div id="rs"></div>`;
+  let tm,last=[];$("#q").oninput=()=>{clearTimeout(tm);tm=setTimeout(run,300)};
+  const draw=L=>{$("#rs").innerHTML=L.length?L.map(u=>`<div class="card row"><div class="av">${ini(u.name)}</div><div class="grow"><b>${esc(u.name)}</b><div class="mut" dir="ltr">@${esc(u.username)}</div></div>
+    <button class="btn o" data-f="${esc(u.id)}">${following.has(u.id)?"إلغاء المتابعة":"متابعة"}</button><button class="btn" data-m="${esc(u.id)}">رسالة</button></div>`).join(""):`<p class="mut" style="text-align:center">لا نتائج</p>`};
+  async function run(){const q=$("#q").value.trim().toLowerCase().replace(/^@/,"").replace(/[^a-z0-9_]/g,"");if(!q){$("#rs").innerHTML="";return}
+    try{const s=await getDocs(query(collection(db,"users"),where("username_lower",">=",q),where("username_lower","<=",q+"\uf8ff"),limit(20)));
+      last=s.docs.filter(d=>d.id!==me.uid).map(d=>({id:d.id,...d.data()}));draw(last)}catch(e){$("#rs").innerHTML=`<p class="err">${esc(e.code)}</p>`}}
+  $("#rs").onclick=async e=>{const t=e.target,id=t.dataset.f||t.dataset.m;if(!id)return;
+    try{
+      if(t.dataset.f){const r=doc(db,"users",me.uid,"following",id);if(following.has(id)){await deleteDoc(r);following.delete(id)}else{await setDoc(r,{at:serverTimestamp()});following.add(id)}draw(last)}
+      else chat(last.find(u=>u.id===id));
+    }catch(err){alert("تعذّر التنفيذ: "+(err.code||err.message))}};
+}
+
+function chats(){
+  main.innerHTML=`<div id="cl"><p class="mut" style="text-align:center">لا محادثات بعد. ابحث عن صديق وأرسل له رسالة.</p></div>`;
+  subs.push(onSnapshot(query(collection(db,"chats"),where("members","array-contains",me.uid),limit(100)),q=>{
+    const L=q.docs.map(d=>({id:d.id,...d.data()})).filter(c=>c.last).sort((a,b)=>ms(b.updated)-ms(a.updated));
+    if(!L.length)return;
+    $("#cl").innerHTML=L.map(c=>{const o=c.members.find(x=>x!==me.uid);return`<div class="card row" data-o="${esc(o)}" data-n="${esc(c.names?.[o])}" style="cursor:pointer"><div class="av">${ini(c.names?.[o])}</div><div class="grow"><b>${esc(c.names?.[o])}</b><div class="mut" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.last)}</div></div></div>`}).join("")},e=>{$("#cl").innerHTML=`<p class="err">${esc(e.code)}</p>`}));
+  $("#cl").onclick=e=>{const c=e.target.closest("[data-o]");if(c)chat({id:c.dataset.o,name:c.dataset.n})};
+}
+
+async function chat(u){
+  if(!u)return;
+  stop();tab="chat";const id=cid(me.uid,u.id),ref=doc(db,"chats",id);
+  try{
+    const s=await getDoc(ref);
+    if(!s.exists())await setDoc(ref,{members:[me.uid,u.id].sort(),names:{[me.uid]:me.name,[u.id]:u.name}});
+  }catch(e){alert("تعذّر فتح المحادثة: "+(e.code||e.message));return show("chats")}
+  nav.hidden=true;
+  main.style.cssText="padding:0;display:flex;flex-direction:column";
+  main.innerHTML=`<div class="row" style="padding:10px;border-bottom:1px solid var(--line)"><button class="lnk" id="bk">→</button><div class="av">${ini(u.name)}</div><b>${esc(u.name)}</b></div>
+  <div class="msgs grow" id="ms" style="overflow:auto;padding:12px"></div>
+  <div class="bar"><input id="mt" maxlength="2000" placeholder="اكتب رسالة..." autocomplete="off" style="margin:0"><button class="btn" id="sd">إرسال</button></div>`;
+  $("#bk").onclick=()=>{stop();main.style.cssText="";nav.hidden=false;show("chats")};
+  const send=async()=>{const text=$("#mt").value.trim();if(!text)return;$("#mt").value="";
+    try{
+      await addDoc(collection(db,"chats",id,"messages"),{from:me.uid,text,ts:serverTimestamp()});
+      await updateDoc(ref,{last:text,updated:serverTimestamp()});
+    }catch(e){$("#mt").value=text;alert("فشل الإرسال: "+(e.code||e.message))}};
+  $("#sd").onclick=send;$("#mt").onkeydown=e=>{if(e.key==="Enter")send()};
+  subs.push(onSnapshot(query(collection(db,"chats",id,"messages"),orderBy("ts"),limit(300)),q=>{
+    const b=$("#ms");b.innerHTML=q.docs.map(d=>{const m=d.data();return`<div class="m ${m.from===me.uid?"me":""}">${esc(m.text)}</div>`}).join("");b.scrollTop=b.scrollHeight}));
+}
+
+function profileV(){
+  main.innerHTML=`<div class="card"><div class="row"><div class="av">${ini(me.name)}</div><div><b>${esc(me.name)}</b><div class="mut" dir="ltr">@${esc(me.username)}</div></div></div>
+  <input id="pn" value="${esc(me.name)}" maxlength="40"><input id="pbio" value="${esc(me.bio)}" maxlength="150" placeholder="نبذة عنك">
+  <button class="btn" id="sv">حفظ</button> <span class="mut" id="ok"></span></div>
+  <p class="mut">يتابع ${following.size} شخصاً</p><button class="btn o" id="lo">تسجيل الخروج</button>`;
+  $("#sv").onclick=async()=>{const name=$("#pn").value.trim(),bio=$("#pbio").value.trim();if(!name)return;
+    try{await updateDoc(doc(db,"users",me.uid),{name,bio});me.name=name;me.bio=bio;$("#ok").textContent="تم الحفظ"}catch(e){$("#ok").textContent="فشل الحفظ: "+(e.code||e.message)}};
+  $("#lo").onclick=()=>A.signOut(auth);
+}
+</script>
+</body>
+</html>
