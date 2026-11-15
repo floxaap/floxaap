@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1200" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="base" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05200f"/><stop offset=".5" stop-color="#031509"/><stop offset="1" stop-color="#010a05"/></linearGradient>
+<radialGradient id="hl1" cx=".85" cy=".08" r=".7"><stop offset="0" stop-color="#14673c" stop-opacity=".5"/><stop offset="1" stop-color="#14673c" stop-opacity="0"/></radialGradient>
+<radialGradient id="hl2" cx=".1" cy=".95" r=".7"><stop offset="0" stop-color="#0f5530" stop-opacity=".45"/><stop offset="1" stop-color="#0f5530" stop-opacity="0"/></radialGradient>
+<linearGradient id="silk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b7a49" stop-opacity=".36"/><stop offset=".5" stop-color="#0b3f24" stop-opacity=".35"/><stop offset="1" stop-color="#031509" stop-opacity="0"/></linearGradient>
+<linearGradient id="silk2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c4a2a" stop-opacity=".42"/><stop offset="1" stop-color="#020d06" stop-opacity="0"/></linearGradient>
+<linearGradient id="gs" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7e3a0" stop-opacity="0"/><stop offset=".25" stop-color="#f7e3a0"/><stop offset=".55" stop-color="#d9ab35"/><stop offset="1" stop-color="#8a6510" stop-opacity="0"/></linearGradient>
+<linearGradient id="gs2" x1="1" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#f7e3a0" stop-opacity="0"/><stop offset=".3" stop-color="#f3d57c"/><stop offset=".7" stop-color="#c8982a"/><stop offset="1" stop-color="#8a6510" stop-opacity="0"/></linearGradient>
+<filter id="gl" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5"/></filter>
+<filter id="gl2"><feGaussianBlur stdDeviation="1.2"/></filter>
+</defs>
+<rect width="600" height="1200" fill="url(#base)"/><rect width="600" height="1200" fill="url(#hl1)"/><rect width="600" height="1200" fill="url(#hl2)"/>
+<path d="M-10 420C140 380 250 280 300 120C330 30 380 -10 420 -10H-10z" fill="url(#silk)"/>
+<path d="M620 300C520 380 470 470 440 600C405 760 300 860 150 900C80 920 20 960 -10 1010V1210H620z" fill="url(#silk2)"/>
+<path d="M-10 640C120 610 210 560 280 480C350 400 440 380 620 400V620C500 600 430 650 370 720C300 800 160 840 -10 830z" fill="url(#silk)" opacity=".55"/>
+<g fill="none" stroke-linecap="round">
+<g filter="url(#gl)" opacity=".8" stroke="#e8c14f"><path d="M-20 215C125 195 250 115 335 -20" stroke-width="7"/><path d="M620 765C470 805 400 925 330 1220" stroke-width="7"/><path d="M620 140C565 250 480 290 435 395" stroke-width="5"/></g>
+<path d="M-20 215C125 195 250 115 335 -20" stroke="url(#gs)" stroke-width="2.6"/>
+<path d="M-20 232C140 217 268 132 358 -20" stroke="url(#gs)" stroke-width="1" opacity=".7"/>
+<path d="M-20 250C150 238 285 150 380 -20" stroke="url(#gs)" stroke-width=".6" opacity=".45"/>
+<path d="M620 765C470 805 400 925 330 1220" stroke="url(#gs2)" stroke-width="2.6"/>
+<path d="M620 790C490 832 425 945 372 1220" stroke="url(#gs2)" stroke-width="1" opacity=".7"/>
+<path d="M620 815C510 860 448 960 415 1220" stroke="url(#gs2)" stroke-width=".6" opacity=".45"/>
+<path d="M620 140C565 250 480 290 435 395" stroke="url(#gs2)" stroke-width="1.6" opacity=".8"/>
+<path d="M-20 780C70 830 130 930 195 1220" stroke="url(#gs)" stroke-width="1.2" opacity=".5"/>
+<path d="M-20 520C40 480 90 400 110 300" stroke="url(#gs2)" stroke-width="1" opacity=".4"/>
+</g>
+<g fill="#f7e3a0"><circle cx="64" cy="190" r="1.6" opacity=".8"/><circle cx="520" cy="880" r="1.4" opacity=".7"/><circle cx="300" cy="60" r="1.2" opacity=".6"/><circle cx="548" cy="1040" r="1.8" opacity=".6"/><circle cx="40" cy="880" r="1.2" opacity=".5"/><circle cx="470" cy="300" r="1.2" opacity=".5"/></g>
+</svg>
