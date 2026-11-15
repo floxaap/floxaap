@@ -218,7 +218,27 @@ function profileV(){
   $("#sv").onclick=async()=>{const name=$("#pn").value.trim();if(!name)return;
     await updateDoc(doc(db,"users",me.uid),{name,bio:$("#pbio").value.trim()});me.name=name;me.bio=$("#pbio").value.trim();$("#ok").textContent="تم الحفظ"};
   $("#lo").onclick=()=>A.signOut(auth);
-}
+}// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAgIffss9riDmNtwtRiTL-bxM3Ylju3PXE",
+  authDomain: "floxaap-d7a1a.firebaseapp.com",
+  projectId: "floxaap-d7a1a",
+  storageBucket: "floxaap-d7a1a.firebasestorage.app",
+  messagingSenderId: "363200418804",
+  appId: "1:363200418804:web:8942848d201d267a811fa1",
+  measurementId: "G-G9Y3W7EK4B"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 </script>
 </body>
 </html>
